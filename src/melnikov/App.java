@@ -4,6 +4,8 @@ import java.awt.*;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimerTask;
+import java.util.Timer;
 
 import javax.sound.sampled.*;
 import javax.swing.*;
@@ -70,27 +72,27 @@ public class App extends JFrame{
         this.setLayout(layout);
 
         this.add(label1);
-        layout.putConstraint(SpringLayout.WEST, label1, 5, SpringLayout.WEST, this);
+        layout.putConstraint(SpringLayout.EAST, label1, -5, SpringLayout.WEST, label2);
         layout.putConstraint(SpringLayout.NORTH, label1, 5, SpringLayout.NORTH, this);
 
         this.add(label2);
-        layout.putConstraint(SpringLayout.WEST, label2, 5, SpringLayout.EAST, label1);
+        layout.putConstraint(SpringLayout.WEST, label2, 105, SpringLayout.WEST, this);
         layout.putConstraint(SpringLayout.NORTH, label2, 5, SpringLayout.NORTH, this);
 
         this.add(comboBox1);
-        layout.putConstraint(SpringLayout.WEST, comboBox1, 5, SpringLayout.WEST, this);
+        layout.putConstraint(SpringLayout.EAST, comboBox1, -5, SpringLayout.WEST, comboBox2);
         layout.putConstraint(SpringLayout.NORTH, comboBox1, 5, SpringLayout.SOUTH, label1);
 
         this.add(comboBox2);
-        layout.putConstraint(SpringLayout.WEST, comboBox2, 5, SpringLayout.EAST, comboBox1);
+        layout.putConstraint(SpringLayout.WEST, comboBox2, 105, SpringLayout.WEST, this);
         layout.putConstraint(SpringLayout.NORTH, comboBox2, 5, SpringLayout.SOUTH, label1);
 
         this.add(playButton);
-        layout.putConstraint(SpringLayout.WEST, playButton, 5, SpringLayout.WEST, this);
+        layout.putConstraint(SpringLayout.EAST, playButton, -5, SpringLayout.WEST, recordButton);
         layout.putConstraint(SpringLayout.NORTH, playButton, 5, SpringLayout.SOUTH, comboBox1);
 
         this.add(recordButton);
-        layout.putConstraint(SpringLayout.WEST, recordButton, 5, SpringLayout.EAST, playButton);
+        layout.putConstraint(SpringLayout.WEST, recordButton, 105, SpringLayout.WEST, this);
         layout.putConstraint(SpringLayout.NORTH, recordButton, 5, SpringLayout.SOUTH, comboBox1);
 
         //this.pack();
@@ -103,7 +105,7 @@ public class App extends JFrame{
             SourceDataLine dataLine = AudioSystem.getSourceDataLine(format, mixerInfo[i]);
             dataLine.open(format);
             byte tempBuffer[] = new byte[10000];
-            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(new File("D:\\Cat-Meow.wav")));
+            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(new File(System.getProperty("user.dir") + "\\Cat-Meow.wav")));
             dataLine.start();
             while (bis.read(tempBuffer) != -1) {
                 dataLine.write(tempBuffer, 0, 10000);
@@ -117,22 +119,27 @@ public class App extends JFrame{
         try {
             TargetDataLine dataLine = AudioSystem.getTargetDataLine(format, mixerInfo[i]);
             dataLine.open(format);
-            File file = new File("D:\\test.wav");
+            File file = new File(System.getProperty("user.dir") + "\\test.wav");
             if( file.exists() )
                 file.delete();
             file.createNewFile();
             dataLine.start();
             AudioInputStream ais = new AudioInputStream(dataLine);
             AudioFileFormat.Type targetType = AudioFileFormat.Type.WAVE;
+
+            TimerTask timerTask = new TimerTask() {
+                public void run() {
+                    dataLine.stop();
+                    dataLine.close();
+                }
+            };
+            Timer timer = new Timer("Timer");
+            timer.schedule(timerTask, 5000L);
+
             AudioSystem.write(ais, targetType, file);
 
-            long startTime = System.currentTimeMillis();
-            while (System.currentTimeMillis() - startTime < (long)5000) {
-                System.out.println("while");
-            }
-
-            dataLine.stop();
-            dataLine.close();
+            //dataLine.stop();
+            //dataLine.close();
         } catch (Exception ex) { System.out.println("Error: " + ex); }
     }
 }
